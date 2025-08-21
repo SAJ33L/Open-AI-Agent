@@ -18,7 +18,7 @@ time_entries = [
 def find_missing_time_entries(start_date: str, end_date: str, employee_id: int) -> str:
     """
     Find missing dates for a given employee in a date range.
-    Returns JSON.
+    Returns JSON in format [{empid, missing_date}].
     """
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
@@ -28,23 +28,21 @@ def find_missing_time_entries(start_date: str, end_date: str, employee_id: int) 
         for e in time_entries if e["employee_id"] == employee_id
     }
 
-    missing = []
+    missing_entries = []
     current = start
     while current <= end:
         if current.date() not in logged_dates:
-            missing.append(str(current.date()))
+            missing_entries.append({
+                "empid": employee_id,
+                "missing_date": str(current.date())
+            })
         current += timedelta(days=1)
 
-    return json.dumps({
-        "employee_id": employee_id,
-        "start_date": start_date,
-        "end_date": end_date,
-        "missing_dates": missing
-    })
+    return json.dumps(missing_entries)
 
 # Define agent
 agent = Agent(
     name="Time Tracker Agent",
-    instructions="You are a time tracking agent. Use the tool to find missing time entries and return JSON.",
+    instructions="You are a time tracking agent. Use the tool to find missing time entries. Return ONLY the raw JSON data without any markdown formatting, code blocks, or additional text. Do not include ```json``` or any other formatting markers.",
     tools=[find_missing_time_entries],
 )
